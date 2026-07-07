@@ -38,6 +38,8 @@ body {
 .zone-3 { --zc: #fb923c; --zr: 251,146,60; }
 .zone-4 { --zc: #f472b6; --zr: 244,114,182; }
 .zone-5 { --zc: #f87171; --zr: 248,113,113; }
+.zone-6 { --zc: #2dd4bf; --zr: 45,212,191; }
+.zone-7 { --zc: #c084fc; --zr: 192,132,252; }
 
 @keyframes live-pulse {
   0%,100% { opacity:1; transform:scale(1); }

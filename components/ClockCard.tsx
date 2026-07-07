@@ -7,9 +7,10 @@ interface Props {
   data: TimeData;
   use24h: boolean;
   index: number;
+  isLocal?: boolean;
 }
 
-export default function ClockCard({ config, data, use24h, index }: Props) {
+export default function ClockCard({ config, data, use24h, index, isLocal }: Props) {
   const { hours, minutes, seconds, period, shortDate, utcOffset, isDay } = data;
 
   return (
@@ -67,9 +68,25 @@ export default function ClockCard({ config, data, use24h, index }: Props) {
               <span style={{ fontSize: "12px", fontWeight: 500, color: "rgba(255,255,255,0.38)", whiteSpace: "nowrap" }}>
                 {config.province} · Canada
               </span>
+              {isLocal && (
+                <span style={{
+                  fontSize: "10px", fontWeight: 700, letterSpacing: "0.04em", whiteSpace: "nowrap",
+                  padding: "2px 7px", borderRadius: "10px",
+                  background: `rgba(var(--zr), 0.16)`,
+                  color: "var(--zc)",
+                  border: `1px solid rgba(var(--zr), 0.3)`,
+                }}>
+                  Your time
+                </span>
+              )}
             </div>
             <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", whiteSpace: "nowrap" }}>
               {config.label}
+              {config.noDst && (
+                <span style={{ marginLeft: "6px", color: "rgba(255,255,255,0.25)" }}>
+                  · no DST
+                </span>
+              )}
             </p>
           </div>
 

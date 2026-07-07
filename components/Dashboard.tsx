@@ -22,9 +22,9 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const raf = requestAnimationFrame(() => setMounted(true));
     const t = setTimeout(() => { setNow(new Date()); setIsLoading(false); }, 1400);
-    return () => clearTimeout(t);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
   }, []);
 
   const tick = useCallback(() => setNow(new Date()), []);
@@ -32,14 +32,23 @@ export default function Dashboard() {
     if (!isLoading) { const id = setInterval(tick, 1000); return () => clearInterval(id); }
   }, [isLoading, tick]);
 
-  const filtered = CANADIAN_TIMEZONES.filter(tz =>
-    !search ||
-    tz.city.toLowerCase().includes(search.toLowerCase()) ||
-    tz.province.toLowerCase().includes(search.toLowerCase()) ||
-    tz.label.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = CANADIAN_TIMEZONES.filter(tz => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      tz.city.toLowerCase().includes(q) ||
+      tz.province.toLowerCase().includes(q) ||
+      tz.label.toLowerCase().includes(q) ||
+      tz.short.toLowerCase().includes(q) ||
+      tz.timezone.toLowerCase().includes(q)
+    );
+  });
 
   if (!mounted) return null;
+
+  // Safe to read the browser's timezone now — we're guaranteed to be past
+  // the client-only mount gate above, so this can't cause a hydration mismatch.
+  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   return (
     <div style={{ minHeight: "100vh", background: "#080b14", position: "relative" }}>
@@ -123,7 +132,8 @@ export default function Dashboard() {
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <input type="text" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)}
+                <input type="text" placeholder="Search…" aria-label="Search cities, provinces, or time zones"
+                  value={search} onChange={e => setSearch(e.target.value)}
                   style={{
                     width: "130px", padding: "6px 12px", borderRadius: "8px", fontSize: "12px",
                     background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
@@ -166,7 +176,7 @@ export default function Dashboard() {
                 Time Across Canada
               </h1>
               <p style={{ fontSize: "15px", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                Six time zones, coast to coast — updated every second.
+                All 13 provinces &amp; territories, coast to coast to coast — updated every second.
               </p>
             </motion.div>
 
@@ -175,13 +185,20 @@ export default function Dashboard() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "12px" }}>
                 <AnimatePresence mode="popLayout">
                   {filtered.map((tz, i) => (
-                    <ClockCard key={tz.timezone} config={tz} data={getTimeData(tz.timezone, use24h, now)} use24h={use24h} index={i} />
+                    <ClockCard
+                      key={tz.city}
+                      config={tz}
+                      data={getTimeData(tz.timezone, use24h, now)}
+                      use24h={use24h}
+                      index={i}
+                      isLocal={tz.timezone === localTz}
+                    />
                   ))}
                 </AnimatePresence>
                 {filtered.length === 0 && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     style={{ gridColumn: "1/-1", textAlign: "center", padding: "64px 0", fontSize: "14px", color: "var(--text-tertiary)" }}>
-                    No results for "{search}"
+                    No results for &quot;{search}&quot;
                   </motion.div>
                 )}
               </div>
@@ -190,7 +207,7 @@ export default function Dashboard() {
             {/* Footer */}
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}
               style={{ textAlign: "center", marginTop: "56px", fontSize: "11px", color: "var(--text-tertiary)" }}>
-              DST handled automatically · All 6 IANA time zones · No backend
+              DST handled automatically (except Saskatchewan &amp; Yukon, which stay on standard time) · All 13 provinces &amp; territories · No backend
             </motion.p>
           </main>
         </motion.div>
